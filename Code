@@ -1,0 +1,87 @@
+import requests
+import time
+
+info = open("info.txt", "a") 
+
+class walmart_scraper:
+    def __init__(self, proxy):
+        self.s = requests.session()
+        self.s.proxies = proxy
+        self.headers = {
+            'host':'www.walmart.ca',
+            'accept':'application/json',
+            'accept-language':'en',
+            'user-agent':'WalmartCaAndroidClient/5.27.1 Dalvik/2.1.0 (Linux; U; Android 7.1.2; SM-N976N Build/QP1A.190711.020)',
+            'content-type':'application/json',
+            'accept-enrycoding':'gzip',
+            }
+        self.dict_of_cats = {
+            'beauty' : "6000201875773",
+            'bake' : "6000194327359",
+            'rollback' : "10019",
+            'chips_snacks' : "6000194328523",
+            'clothing_acc' : "6000202294804",
+            'eggs_and_dairy' : '6000194327369',
+            'deli_fresh_meals' : '6000194327356',
+            'drinks' : "6000194326336",
+            'electronics_entertainment' : "6000201800017",
+            'frozen' : "6000194326337",
+            'fruits_veg' : "6000194327370",
+            'health' : "6000194327360",
+            'home_kitchen_outdoor' : "6000200032798",
+            'householding_nad_cleaning' : "6000194327361",
+            'international' : "6000195495824",
+            'meat_seafood_alts' : "6000194327357",
+            'natural_organics' : "6000195019635",
+            'pantry_foods' : "6000194326346",
+            'personal_care' : "6000195490502",
+            'pets' : "6000194326338",
+            'sports_and_rec' : '6000201800813',
+            'toys' : "6000200032957",
+            }
+
+    def fetch_data_fruits_and_veg(self):
+
+        lst = self.dict_of_cats
+        for key, value in lst.items():
+            info.write(f"cat = {key}:")
+            print(f"cat = {key}:")
+            for i in range(1, 35):     
+                try:
+                    printpage = requests.get(f"https://www.walmart.ca//api/mobile/browse?p={i}&lang=en&page_size=59&experience=grocery&c={value}", headers = self.headers).json()       
+                    key_list = page['items']['productIds']
+                    page_items = page['items']['products']
+                    for key in (key_list):
+                        product_sku = page_items[key]['skuIds'][0]
+                        product_name = page_items[key]['name']
+                        product_image = page_items[key]['skus'][product_sku]['images'][0]['thumbnail']['url']
+                        print(f"""
+                        ================
+                        Product Name: {product_name}
+                        Product SKU: {product_sku}
+                        Product Image: {product_image}
+                        """)
+ 
+                        info.write(f"""
+                        ================
+                        Product Name: {product_name}
+                        Product SKU: {product_sku}
+                        Product Image: {product_image}\n
+                        """)
+
+                except:
+                    print(f"Page limit reached: {i-1} pages, Going to next cat:")
+                    time.sleep(5)
+                    break
+
+
+
+    def start (self):
+        try:
+            self.fetch_data_fruits_and_veg()
+            info.close
+        except requests.exceptions.RequestException:
+            print("Invalid proxy, try again")
+
+x = walmart_scraper("put your proxy here")
+x.start()
